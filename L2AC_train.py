@@ -67,8 +67,8 @@ config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
 with tf.Session(config=config) as sess:
-    actor = ac.Actor(sess, n_features=[S_DIM, S_LEN], n_actions=A_DIM, lr=LR_A)
-    critic = ac.Critic(sess, n_features=[S_DIM, S_LEN], lr=LR_C)
+    actor = ac.ActorCritic(sess, n_features=[S_DIM, S_LEN], n_actions=A_DIM, lr_a=LR_A, lr_c=LR_C)
+    #critic = ac.Critic(sess, n_features=[S_DIM, S_LEN], lr=LR_C)
     L_actor = ac.LActor(sess, n_features=[S_DIM, S_LEN], n_actions=LA_DIM, lr=LR_LA)
     sess.run(tf.global_variables_initializer())
 
@@ -192,8 +192,8 @@ with tf.Session(config=config) as sess:
                     lr_c = 0.0005
 
                 if not is_first:
-                    td_error = critic.learn(pre_state, reward, state, lr_c)
-                    actor.learn(pre_state, pre_ac, td_error, lr_)
+                    #td_error = critic.learn(pre_state, reward, state, lr_c)
+                    actor.learn(pre_state, pre_ac, lr_, reward, state, lr_c)
                     L_actor.learn(pre_state, pre_la_ac, td_error, lr_)
 
                 else:
