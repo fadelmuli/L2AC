@@ -200,7 +200,7 @@ with tf.Session(config=config) as sess:
                     is_first = False
 
                 pre_state = state
-                pre_ac = ac
+                pre_ac = action
                 pre_la_ac = la_action
                 last_bit_rate = bit_rate
 
