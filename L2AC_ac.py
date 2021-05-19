@@ -292,7 +292,7 @@ class LActorCritic(object):
         with tf.variable_scope('train'):
             self.train_op_a = tf.train.AdamOptimizer(self.lr_a).minimize(-self.exp_v_a)  # minimize(-exp_v) = maximize(exp_v)
             self.train_op_la = tf.train.AdamOptimizer(self.lr_a).minimize(-self.exp_v_la)
-            self.train_op_c = tf.train.AdamOptimizer(self.lr_c).minimize(self.loss)                   
+            self.train_op_c = tf.train.AdamOptimizer(self.lr_a).minimize(self.loss)                   
                                
     def learn(self, s, a_a, a_la, lr_a, r, s_, lr_c):
         s, s_ = s[np.newaxis, :], s_[np.newaxis,:]
