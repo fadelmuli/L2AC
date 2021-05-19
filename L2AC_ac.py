@@ -268,7 +268,7 @@ class ActorCritic(object):
         td, _ = self.sess.run([self.td_error, self.train_op],
                                           {self.s: s, self.v_: v_, self.r: r, self.lr: lr_c})
         
-        feed_dict = {self.s: s, self.a: a, self.td_error: td, self.lr:lr}
+        feed_dict = {self.s: s, self.a: a, self.td_error: td, self.lr:lr_a}
         _, exp_v = self.sess.run([self.train_op, self.exp_v], feed_dict)
         return exp_v
 
