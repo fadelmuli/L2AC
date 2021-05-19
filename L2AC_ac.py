@@ -189,18 +189,27 @@ class LActor(object):
         return np.random.choice(np.arange(probs.shape[1]), p=probs.ravel())
     
     
-class ActorCritic(object):
-    def __init__(self, sess, n_features, n_actions, lr_a=0.001, lr_c=0.01):
+class LActorCritic(object):
+    def __init__(self, sess, n_features, n_actions_a, n_actions_la, lr_a=0.001, lr_la=0.001, lr_c=0.01):
         self.sess = sess
+
         
         self.s = tf.placeholder(tf.float32, [1, n_features[0], n_features[1]], "state")
-        self.a = tf.placeholder(tf.int32, None, "act")
-        self.td_error = tf.placeholder(tf.float32, None, "td_error")
+
+        # actor
+        self.a_a = tf.placeholder(tf.int32, None, "act_a")
+        self.td_error_a = tf.placeholder(tf.float32, None, "td_error_a")
         self.lr_a = tf.placeholder(tf.float32, None, 'lr_ph_a')
-        
+
+        # critic
         self.v_ = tf.placeholder(tf.float32, [1, 1], "v_next")
         self.r = tf.placeholder(tf.float32, None, 'r')
         self.lr_c = tf.placeholder(tf.float32, None, 'lr_ph_c')
+
+        # Lactor
+        self.a_la = tf.placeholder(tf.int32, None, "act_la")
+        self.td_error_la = tf.placeholder(tf.float32, None, "td_error_la")
+        self.lr_la = tf.placeholder(tf.float32, None, 'lr_ph_la')
 
         with tf.variable_scope('Actor_1'):
             split0 = tflearn.conv_1d(self.s[:, 0:1, :], 5, 1)
@@ -222,6 +231,7 @@ class ActorCritic(object):
                 bias_initializer=tf.constant_initializer(0.1),
                 name='l1'
             )
+            
             l2 = tf.layers.dense(
                 inputs=l1,
                 units=128,
@@ -231,13 +241,31 @@ class ActorCritic(object):
                 name='l2'
             )
 
-            self.acts_prob = tf.layers.dense(
+            l3 = tf.layers.dense(
+                inputs=hidden0,
+                units=256,
+                activation=tf.nn.relu,
+                kernel_initializer=tf.random_normal_initializer(0., .1),
+                bias_initializer=tf.constant_initializer(0.1),
+                name='l3'
+            )
+
+            self.acts_prob_a = tf.layers.dense(
                 inputs=l2,
-                units=n_actions,
+                units=n_actions_a,
                 activation=tf.nn.softmax,
                 kernel_initializer=tf.random_normal_initializer(0., .1),
                 bias_initializer=tf.constant_initializer(0.1),
-                name='acts_prob'
+                name='acts_prob_a'
+            )
+
+            self.acts_prob_la = tf.layers.dense(
+                inputs=l3,
+                units=n_actions_la,
+                activation=tf.nn.softmax,
+                kernel_initializer=tf.random_normal_initializer(0., .1),
+                bias_initializer=tf.constant_initializer(0.1),
+                name='acts_prob_la'
             )
             
             self.v = tf.layers.dense(
@@ -249,30 +277,43 @@ class ActorCritic(object):
                 name='V'
             )
 
-        with tf.variable_scope('exp_v'):
-            log_prob = tf.log(self.acts_prob[0, self.a])
-            self.exp_v = tf.reduce_mean(log_prob * self.td_error)  # advantage (TD_error) guided loss
-        
         with tf.variable_scope('squared_TD_error'):
             self.td_error = self.r + 0.9 * self.v_ - self.v
             self.loss = tf.square(self.td_error)    # TD_error = (r+gamma*V_next) - V_eval
 
-        with tf.variable_scope('train'):
-            self.train_op = tf.train.AdamOptimizer(self.lr).minimize(-self.exp_v)  # minimize(-exp_v) = maximize(exp_v)
+        with tf.variable_scope('exp_v_a'):
+            log_prob_a = tf.log(self.acts_prob_a[0, self.a_a])
+            self.exp_v_a = tf.reduce_mean(log_prob_a * self.td_error_a)  # advantage (TD_error) guided loss
 
-    def learn(self, s, a, lr_a, r, s_, lr_c):
+        with tf.variable_scope('exp_v_la):
+            log_prob_la = tf.log(self.acts_prob_la[0, self.a_la])
+            self.exp_v_la = tf.reduce_mean(log_prob_la * self.td_error_la)  # advantage (TD_error) guided loss
+
+        with tf.variable_scope('train'):
+            self.train_op_a = tf.train.AdamOptimizer(self.lr_a).minimize(-self.exp_v_a)  # minimize(-exp_v) = maximize(exp_v)
+            self.train_op_la = tf.train.AdamOptimizer(self.lr_a).minimize(-self.exp_v_la)
+            self.train_op_c = tf.train.AdamOptimizer(self.lr_c).minimize(self.loss)                   
+                               
+    def learn(self, s, a_a, a_la, lr_a, r, s_, lr_c):
         s, s_ = s[np.newaxis, :], s_[np.newaxis,:]
         
         v_ = self.sess.run(self.v, {self.s: s_})
+        td, _ = self.sess.run([self.td_error, self.train_op_c], {self.s: s, self.v_: v_, self.r: r, self.lr_a: lr_c})
         
-        td, _ = self.sess.run([self.td_error, self.train_op],
-                                          {self.s: s, self.v_: v_, self.r: r, self.lr: lr_c})
+        feed_dict_a = {self.s: s, self.a_a: a_a, self.td_error_a: td, self.lr_a:lr_a}
+        _, exp_v_a = self.sess.run([self.train_op_a, self.exp_v_a], feed_dict_a)
+
+        feed_dict_la = {self.s: s, self.a_la: a_la, self.td_error_la: td, self.lr_a:lr_a}
+        _, exp_v_la = self.sess.run([self.train_op_la, self.exp_v_la], feed_dict_la)
         
-        feed_dict = {self.s: s, self.a: a, self.td_error: td, self.lr:lr_a}
-        _, exp_v = self.sess.run([self.train_op, self.exp_v], feed_dict)
-        return exp_v
+        return exp_v_a, exp_v_la
 
     def choose_action(self, s, eps):
         s = s[np.newaxis, :]
-        probs = self.sess.run(self.acts_prob, {self.s: s})   # get probabilities for all actions
-        return np.random.choice(np.arange(probs.shape[1]), p=probs.ravel())
+        probs_a = self.sess.run(self.acts_prob_a, {self.s: s})   # get probabilities for all actions
+        probs_la = self.sess.run(self.acts_prob_la, {self.s: s})
+
+        result_a = np.random.choice(np.arange(probs_a.shape[1]), p=probs_a.ravel())
+        result_la = np.random.choice(np.arange(probs_la.shape[1]), p=probs_la.ravel())
+        return result_a, result_la
+
