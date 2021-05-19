@@ -285,7 +285,7 @@ class LActorCritic(object):
             log_prob_a = tf.log(self.acts_prob_a[0, self.a_a])
             self.exp_v_a = tf.reduce_mean(log_prob_a * self.td_error_a)  # advantage (TD_error) guided loss
 
-        with tf.variable_scope('exp_v_la):
+        with tf.variable_scope('exp_v_la'):
             log_prob_la = tf.log(self.acts_prob_la[0, self.a_la])
             self.exp_v_la = tf.reduce_mean(log_prob_la * self.td_error_la)  # advantage (TD_error) guided loss
 
