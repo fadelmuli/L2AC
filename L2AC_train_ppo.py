@@ -3,7 +3,7 @@ import numpy as np
 import time as tm
 import fixed_env as env
 import load_trace as load_trace
-import L2AC_train_ppo as ac
+import L2AC_ppo as ac
 
 # work parameter
 DEBUG = False
