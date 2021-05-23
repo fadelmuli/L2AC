@@ -43,8 +43,8 @@ VIDEO_TRACE = 'AsianCup_China_Uzbekistan'
 VIDEO_TRACE_list = ['AsianCup_China_Uzbekistan', 'Fengtimo_2018_11_3', 'game', 'room', 'sports']
 network_trace_dir = './dataset/network_trace/' + NETWORK_TRACE + '/'
 video_trace_prefix = './dataset/video_trace/' + VIDEO_TRACE + '/frame_trace_'
-LOG_FILE_PATH = './log/train'
-SUMMARY_DIR = './L2AC_results'  # trained model path
+LOG_FILE_PATH = '/content/drive/MyDrive/L2AC/log/train'
+SUMMARY_DIR = '/content/drive/MyDrive/L2AC/L2AC_results'  # trained model path
 
 # load the network trace
 all_cooked_time, all_cooked_bw, all_file_names = load_trace.load_trace(network_trace_dir)
