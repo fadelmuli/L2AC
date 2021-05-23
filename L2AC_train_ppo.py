@@ -103,7 +103,7 @@ with tf.Session(config=config) as sess:
                                   Debug=DEBUG)
         
         log_path = LOG_FILE_PATH + '_' + all_file_names[net_env.trace_idx]
-        log_file = open(log_path, 'w')
+        log_file = open(log_path, 'a')
         
         pre_ac = 0
         while True:
@@ -114,7 +114,10 @@ with tf.Session(config=config) as sess:
             rebuf, buffer_size, play_time_len, end_delay, \
             cdn_newest_id, download_id, cdn_has_frame, skip_frame_time_len, decision_flag, \
             buffer_flag, cdn_flag, skip_flag, end_of_video = net_env.get_video_frame(bit_rate, target_buffer, latency_limit)
-
+            
+            pre_bit_rate = bit_rate
+            pre_latency_limit = latency_limit
+            
             # QOE setting
             if end_delay <= 1.0:
                 LANTENCY_PENALTY = 0.005
@@ -231,6 +234,16 @@ with tf.Session(config=config) as sess:
                 last_bit_rate = bit_rate
 
             reward_all += reward_frame
+            
+            log_file.write(str(time / 1000) + '\t' +
+                               str(BIT_RATE[pre_bit_rate]) + '\t' +
+                               str(pre_latency_limit) + '\t' +
+                               str(buffer_size) + '\t' +
+                               str(rebuf) + '\t' +
+                               str(send_data_size) + '\t' +
+                               str(end_delay) + '\t' +
+                               str(reward) + '\n')
+            log_file.flush()
             if end_of_video:
                 log_file.write('\n')
                 log_file.close()
@@ -250,5 +263,5 @@ with tf.Session(config=config) as sess:
                     break
                     
             log_path = LOG_FILE_PATH + '_' + all_file_names[net_env.trace_idx]
-            log_file = open(log_path, 'w')
+            log_file = open(log_path, 'a')
               
