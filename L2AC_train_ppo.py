@@ -42,7 +42,7 @@ VIDEO_TRACE = 'AsianCup_China_Uzbekistan'
 VIDEO_TRACE_list = ['AsianCup_China_Uzbekistan', 'Fengtimo_2018_11_3', 'game', 'room', 'sports']
 network_trace_dir = './dataset/network_trace/' + NETWORK_TRACE + '/'
 video_trace_prefix = './dataset/video_trace/' + VIDEO_TRACE + '/frame_trace_'
-LOG_FILE_PATH = './log/'
+LOG_FILE_PATH = './log/train'
 SUMMARY_DIR = './L2AC_results'  # trained model path
 
 # load the network trace
@@ -100,6 +100,10 @@ with tf.Session(config=config) as sess:
                                   logfile_path=LOG_FILE_PATH,
                                   VIDEO_SIZE_FILE=video_trace_prefix,
                                   Debug=DEBUG)
+        
+        log_path = LOG_FILE_PATH + '_' + all_file_names[net_env.trace_idx]
+        log_file = open(log_path, 'wb')
+        
         pre_ac = 0
         while True:
             timestamp_start = tm.time()
@@ -131,7 +135,18 @@ with tf.Session(config=config) as sess:
 
                 reward = chunk_reward
                 chunk_reward = 0
-
+                
+                # log time_stamp, bit_rate, buffer_size, reward
+                log_file.write(str(time / 1000) + '\t' +
+                               str(BIT_RATE[bit_rate]) + '\t' +
+                               str(latency_limit) + '\t' +
+                               str(buffer_size) + '\t' +
+                               str(rebuf) + '\t' +
+                               str(send_data_size) + '\t' +
+                               str(end_delay) + '\t' +
+                               str(reward) + '\n')
+                log_file.flush()
+                
                 # ----------------- the Algorithm ---------------------
 
                 if not cdn_flag and time_interval is not 0:
@@ -214,6 +229,8 @@ with tf.Session(config=config) as sess:
 
             reward_all += reward_frame
             if end_of_video:
+                log_file.write('\n')
+                log_file.close()
                 print("network traceID: %d, network_reward: %f, avg_running_time: %f" %
                       (video_count,
                        reward_all,
@@ -228,3 +245,7 @@ with tf.Session(config=config) as sess:
                     print("epoch total reward: %f" % (epoch_reward / video_count))
                     epoch_reward = 0
                     break
+                    
+            log_path = LOG_FILE_PATH + '_' + all_file_names[net_env.trace_idx]
+            log_file = open(log_path, 'wb')
+              
