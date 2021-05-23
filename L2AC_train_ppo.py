@@ -91,7 +91,8 @@ with tf.Session(config=config) as sess:
         is_first = True
 
         video_id = i_eps % 5
-        VIDEO_TRACE = VIDEO_TRACE_list[video_id]
+        VIDEO_TRACE = VIDEO_TRACE_list[0]
+        print("Video: ", VIDEO_TRACE)
         video_trace_prefix = './dataset/video_trace/' + VIDEO_TRACE + '/frame_trace_'
         all_cooked_time, all_cooked_bw, all_file_names = load_trace.load_trace(network_trace_dir)
         net_env = env.Environment(all_cooked_time=all_cooked_time,
@@ -102,7 +103,7 @@ with tf.Session(config=config) as sess:
                                   Debug=DEBUG)
         
         log_path = LOG_FILE_PATH + '_' + all_file_names[net_env.trace_idx]
-        log_file = open(log_path, 'wb')
+        log_file = open(log_path, 'w')
         
         pre_ac = 0
         while True:
@@ -176,12 +177,14 @@ with tf.Session(config=config) as sess:
                 action, a_probs = actor.choose_action(state, i_eps)
                 action_vec = np.zeros(A_DIM)
                 action_vec[action] = 1
+                action_vec = np.expand_dims(action_vec, 0)
                 
                 laction, la_probs = L_actor.choose_action(state, i_eps)  # latency network action
                 laction_vec = np.zeros(LA_DIM)
                 laction_vec[laction] = 1
+                laction_vec = np.expand_dims(llaction_vec, 0)
   
-                latency_limit = la_dict_list[la_action]
+                latency_limit = la_dict_list[laction]
                 la_sum += 1
                 if action == 0:
                     bit_rate = 0
@@ -247,5 +250,5 @@ with tf.Session(config=config) as sess:
                     break
                     
             log_path = LOG_FILE_PATH + '_' + all_file_names[net_env.trace_idx]
-            log_file = open(log_path, 'wb')
+            log_file = open(log_path, 'w')
               
