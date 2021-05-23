@@ -61,8 +61,8 @@ class Actor(object):
         self.lr = tf.placeholder(tf.float32, None, 'lr_ph')
         
         self.pi = self.CreateNetwork(inputs=self.s, n_actions=n_actions)
-        #self.real_out = tf.clip_by_value(self.pi, 1e-4, 1. - 1e-4)
-        self.real_out = self.pi
+        self.real_out = tf.clip_by_value(self.pi, 1e-4, 1. - 1e-4)
+        #self.real_out = self.pi
         self.ppo2loss = tf.minimum(self.r(self.real_out, self.old_pi, self.acts) * self.td_error, 
                             tf.clip_by_value(self.r(self.real_out, self.old_pi, self.acts), 1 - 0.2, 1 + 0.2) * self.td_error
                         )
@@ -80,7 +80,7 @@ class Actor(object):
 
     def choose_action(self, s, eps):
         s = s[np.newaxis, :]
-        probs = self.sess.run(self.acts_prob, {self.s: s})   # get probabilities for all actions
+        probs = self.sess.run(self.real_out, {self.s: s})   # get probabilities for all actions
         return np.random.choice(np.arange(probs.shape[1]), p=probs.ravel()), probs
 
 
@@ -148,7 +148,7 @@ class Critic(object):
 
 class LActor(object):
     def CreateNetwork(self, inputs, n_actions):
-         with tf.variable_scope('Actor_1'):
+         with tf.variable_scope('LActor_1'):
             split0 = tflearn.conv_1d(inputs[:, 0:1, :], 5, 1)
             split1 = tflearn.conv_1d(inputs[:, 1:2, :], 16, 1)
             a = split0[:, 0, :]
@@ -203,8 +203,8 @@ class LActor(object):
         self.lr = tf.placeholder(tf.float32, None, 'lr_ph')
         
         self.pi = self.CreateNetwork(inputs=self.s, n_actions=n_actions)
-        #self.real_out = tf.clip_by_value(self.pi, 1e-4, 1. - 1e-4)
-        self.real_out = self.pi
+        self.real_out = tf.clip_by_value(self.pi, 1e-4, 1. - 1e-4)
+        #self.real_out = self.pi
         self.ppo2loss = tf.minimum(self.r(self.real_out, self.old_pi, self.acts) * self.td_error, 
                             tf.clip_by_value(self.r(self.real_out, self.old_pi, self.acts), 1 - 0.2, 1 + 0.2) * self.td_error
                         )
@@ -222,5 +222,5 @@ class LActor(object):
 
     def choose_action(self, s, eps):
         s = s[np.newaxis, :]  # single state
-        probs = self.sess.run(self.acts_prob, {self.s: s})
+        probs = self.sess.run(self.real_out, {self.s: s})
         return np.random.choice(np.arange(probs.shape[1]), p=probs.ravel()), probs
