@@ -4,6 +4,7 @@ import time as tm
 import fixed_env as env
 import load_trace as load_trace
 import L2AC_ppo as ac
+import os
 
 # work parameter
 DEBUG = False
@@ -92,7 +93,6 @@ with tf.Session(config=config) as sess:
 
         video_id = i_eps % 5
         VIDEO_TRACE = VIDEO_TRACE_list[0]
-        print("Video: ", VIDEO_TRACE)
         video_trace_prefix = './dataset/video_trace/' + VIDEO_TRACE + '/frame_trace_'
         all_cooked_time, all_cooked_bw, all_file_names = load_trace.load_trace(network_trace_dir)
         net_env = env.Environment(all_cooked_time=all_cooked_time,
@@ -102,7 +102,10 @@ with tf.Session(config=config) as sess:
                                   VIDEO_SIZE_FILE=video_trace_prefix,
                                   Debug=DEBUG)
         
-        log_path = LOG_FILE_PATH + '_' + all_file_names[net_env.trace_idx]
+        log_folder = LOG_FILE_PATH + '/epoch_' + str(i_eps + 1)
+        if not os.path.exists(log_folder):
+            os.makedirs(log_folder)
+        log_path = log_folder + '/' + all_file_names[net_env.trace_idx]
         log_file = open(log_path, 'a')
         
         pre_ac = 0
@@ -185,7 +188,7 @@ with tf.Session(config=config) as sess:
                 laction, la_probs = L_actor.choose_action(state, i_eps)  # latency network action
                 laction_vec = np.zeros(LA_DIM)
                 laction_vec[laction] = 1
-                laction_vec = np.expand_dims(llaction_vec, 0)
+                laction_vec = np.expand_dims(laction_vec, 0)
   
                 latency_limit = la_dict_list[laction]
                 la_sum += 1
@@ -242,7 +245,7 @@ with tf.Session(config=config) as sess:
                                str(rebuf) + '\t' +
                                str(send_data_size) + '\t' +
                                str(end_delay) + '\t' +
-                               str(reward) + '\n')
+                               str(reward_all) + '\n')
             log_file.flush()
             if end_of_video:
                 log_file.write('\n')
@@ -262,6 +265,6 @@ with tf.Session(config=config) as sess:
                     epoch_reward = 0
                     break
                     
-            log_path = LOG_FILE_PATH + '_' + all_file_names[net_env.trace_idx]
+            log_path = log_folder + '/' + all_file_names[net_env.trace_idx]
             log_file = open(log_path, 'a')
               
