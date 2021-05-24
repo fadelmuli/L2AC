@@ -37,7 +37,7 @@ LANTENCY_PENALTY = 0.005
 
 # train path
 #NN_MODEL = None
-NN_MODEL = 'content/drive/MyDrive/L2AC/L2AC_results/nn_model_ep_42.ckpt' #  can load trained model
+NN_MODEL = '/content/drive/MyDrive/L2AC/L2AC_results/nn_model_ep_42.ckpt' #  can load trained model
 NETWORK_TRACE = ['fixed', 'high', 'low', 'medium', 'middle']
 VIDEO_TRACE = 'AsianCup_China_Uzbekistan'
 VIDEO_TRACE_list = ['AsianCup_China_Uzbekistan', 'Fengtimo_2018_11_3', 'game', 'room', 'sports']
@@ -69,37 +69,38 @@ throughput_record = []
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-for network in NETWORK_TRACE:
-    print('network: ', network)
-    for video in VIDEO_TRACE_list:
-        print('video: ', video)
-        with tf.Session(config=config) as sess:
-            actor = ac.Actor(sess, n_features=[S_DIM, S_LEN], n_actions=A_DIM, lr=LR_A)
-            critic = ac.Critic(sess, n_features=[S_DIM, S_LEN], lr=LR_C)
-            L_actor = ac.LActor(sess, n_features=[S_DIM, S_LEN], n_actions=LA_DIM, lr=LR_LA)
-            sess.run(tf.global_variables_initializer())
 
-            # reader = pywrap_tensorflow.NewCheckpointReader("./submit/results/nn_model_ep_ac_1.ckpt")
-            # var_to_shape_map = reader.get_variable_to_shape_map()
-            # for key in var_to_shape_map:
-            #     print(key)
-            variables_to_restore = tf.contrib.framework.get_variables_to_restore(
-                exclude=['train/LActor', 'LActor', 'train_2/beta1_power', 'train_2/beta2_power'])
-            saver1 = tf.train.Saver(max_to_keep=200)  # save neural net parameters
-            saver2 = tf.train.Saver(max_to_keep=200)  # save neural net parameters
-            nn_model = NN_MODEL
-                    
-            meta_file = NN_MODEL + '.meta'
-            saver = tf.train.import_meta_graph(meta_file)
-            if nn_model is not None:  # nn_model is the path to file
-                saver.restore(sess, nn_model)
-                print("Model restored.")
+with tf.Session(config=config) as sess:
+    actor = ac.Actor(sess, n_features=[S_DIM, S_LEN], n_actions=A_DIM, lr=LR_A)
+    critic = ac.Critic(sess, n_features=[S_DIM, S_LEN], lr=LR_C)
+    L_actor = ac.LActor(sess, n_features=[S_DIM, S_LEN], n_actions=LA_DIM, lr=LR_LA)
+    sess.run(tf.global_variables_initializer())
 
+    # reader = pywrap_tensorflow.NewCheckpointReader("./submit/results/nn_model_ep_ac_1.ckpt")
+    # var_to_shape_map = reader.get_variable_to_shape_map()
+    # for key in var_to_shape_map:
+    #     print(key)
+    variables_to_restore = tf.contrib.framework.get_variables_to_restore(
+        exclude=['train/LActor', 'LActor', 'train_2/beta1_power', 'train_2/beta2_power'])
+    saver1 = tf.train.Saver(max_to_keep=200)  # save neural net parameters
+    saver2 = tf.train.Saver(max_to_keep=200)  # save neural net parameters
+    nn_model = NN_MODEL
+
+    meta_file = NN_MODEL + '.meta'
+    saver = tf.train.import_meta_graph(meta_file)
+    if nn_model is not None:  # nn_model is the path to file
+        saver.restore(sess, nn_model)
+        print("Model restored.")
+    
+    for network in NETWORK_TRACE:
+        print('network: ', network)
+        for video in VIDEO_TRACE_list:
+            print('video: ', video)
             chunk_reward = 0
             video_count = 0
             is_first = True
 
-            VIDEO_TRACE = VIDEO_TRACE_list[0]
+            #VIDEO_TRACE = VIDEO_TRACE_list[0]
             video_trace_prefix = './dataset/video_trace/' + video + '/frame_trace_'
             network_trace_dir = './dataset/network_trace/' + network + '/'
             all_cooked_time, all_cooked_bw, all_file_names = load_trace.load_trace(network_trace_dir)
@@ -125,10 +126,10 @@ for network in NETWORK_TRACE:
                 rebuf, buffer_size, play_time_len, end_delay, \
                 cdn_newest_id, download_id, cdn_has_frame, skip_frame_time_len, decision_flag, \
                 buffer_flag, cdn_flag, skip_flag, end_of_video = net_env.get_video_frame(bit_rate, target_buffer, latency_limit)
-                
+
                 pre_bit_rate = bit_rate
                 pre_latency_limit = latency_limit
-                
+
                 # QOE setting
                 if end_delay <= 1.0:
                     LANTENCY_PENALTY = 0.005
@@ -150,7 +151,7 @@ for network in NETWORK_TRACE:
 
                     reward = chunk_reward
                     chunk_reward = 0
-                
+
                     # ----------------- the Algorithm ---------------------
 
                     if not cdn_flag and time_interval is not 0:
@@ -181,7 +182,7 @@ for network in NETWORK_TRACE:
                     action_vec = np.zeros(A_DIM)
                     action_vec[action] = 1
                     action_vec = np.expand_dims(action_vec, 0)
-                    
+
                     laction, la_probs = L_actor.choose_action(state)  # latency network action
                     laction_vec = np.zeros(LA_DIM)
                     laction_vec[laction] = 1
@@ -220,7 +221,7 @@ for network in NETWORK_TRACE:
                     last_bit_rate = bit_rate
 
                 reward_all += reward_frame
-                
+
                 log_file.write(str(time / 1000) + '\t' +
                                    str(BIT_RATE[pre_bit_rate]) + '\t' +
                                    str(pre_latency_limit) + '\t' +
@@ -244,6 +245,6 @@ for network in NETWORK_TRACE:
                         print("epoch total reward: %f" % (epoch_reward / video_count))
                         epoch_reward = 0
                         break
-                        
+
                 log_path = log_folder + '/' + all_file_names[net_env.trace_idx]
                 log_file = open(log_path, 'a')
