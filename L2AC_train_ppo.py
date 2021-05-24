@@ -80,7 +80,7 @@ with tf.Session(config=config) as sess:
     # for key in var_to_shape_map:
     #     print(key)
     variables_to_restore = tf.contrib.framework.get_variables_to_restore(
-        exclude=['train/LActor', 'LActor', 'train_2/beta1_power', 'train_2/beta2_power'])
+        exclude=['train_2/beta1_power', 'train_2/beta2_power'])
     saver1 = tf.train.Saver(max_to_keep=200)  # save neural net parameters
     saver2 = tf.train.Saver(max_to_keep=200)  # save neural net parameters
     nn_model = NN_MODEL
