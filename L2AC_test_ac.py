@@ -36,7 +36,7 @@ LANTENCY_PENALTY = 0.005
 
 # train path
 #NN_MODEL = None
-NN_MODEL = '/content/drive/MyDrive/L2AC/AC_results_2/nn_model_ep_49.ckpt' #  can load trained model
+NN_MODEL = '/content/drive/MyDrive/L2AC/AC_results_2/nn_model_ep_44.ckpt' #  can load trained model
 NETWORK_TRACE = ['fixed', 'high', 'low', 'medium', 'middle']
 #VIDEO_TRACE = 'AsianCup_China_Uzbekistan'
 VIDEO_TRACE_list = ['AsianCup_China_Uzbekistan', 'Fengtimo_2018_11_3', 'game', 'room', 'sports']
