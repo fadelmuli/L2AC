@@ -78,7 +78,7 @@ class Actor(object):
 
         return exp_v
 
-    def choose_action(self, s, eps):
+    def choose_action(self, s, eps=None):
         s = s[np.newaxis, :]
         probs = self.sess.run(self.real_out, {self.s: s})   # get probabilities for all actions
         return np.random.choice(np.arange(probs.shape[1]), p=probs.ravel()), probs
@@ -220,7 +220,7 @@ class LActor(object):
 
         return exp_v
 
-    def choose_action(self, s, eps):
+    def choose_action(self, s, eps=None):
         s = s[np.newaxis, :]  # single state
         probs = self.sess.run(self.real_out, {self.s: s})
         return np.random.choice(np.arange(probs.shape[1]), p=probs.ravel()), probs
