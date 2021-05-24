@@ -49,7 +49,7 @@ LOG_FILE_PATH = './log/test'
 #SUMMARY_DIR = './L2AC_results'  # trained model path
 
 # load the network trace
-all_cooked_time, all_cooked_bw, all_file_names = load_trace.load_trace(network_trace_dir)
+#all_cooked_time, all_cooked_bw, all_file_names = load_trace.load_trace(network_trace_dir)
 
 # defalut setting
 epoch_reward = 0
