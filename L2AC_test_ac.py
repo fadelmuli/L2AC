@@ -230,3 +230,5 @@ with tf.Session(config=config) as sess:
                         print("epoch total reward: %f" % (epoch_reward / video_count))
                         epoch_reward = 0
                         break
+                log_path = log_folder + '/' + all_file_names[net_env.trace_idx]
+                log_file = open(log_path, 'a')
