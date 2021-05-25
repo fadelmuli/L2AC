@@ -62,7 +62,7 @@ class Actor(object):
         
         self.pi = self.CreateNetwork(inputs=self.s, n_actions=n_actions)
         self.real_out = tf.clip_by_value(self.pi, 1e-4, 1. - 1e-4)
-        self.real_out = self.pi
+        #self.real_out = self.pi
         self.ppo2loss = tf.minimum(self.r(self.real_out, self.old_pi, self.acts) * self.td_error, 
                             tf.clip_by_value(self.r(self.real_out, self.old_pi, self.acts), 1 - 0.2, 1 + 0.2) * self.td_error
                         )
@@ -211,7 +211,7 @@ class LActor(object):
         
         self.pi = self.CreateNetwork(inputs=self.s, n_actions=n_actions)
         self.real_out = tf.clip_by_value(self.pi, 1e-4, 1. - 1e-4)
-        self.real_out = self.pi
+        #self.real_out = self.pi
         self.ppo2loss = tf.minimum(self.r(self.real_out, self.old_pi, self.acts) * self.td_error, 
                             tf.clip_by_value(self.r(self.real_out, self.old_pi, self.acts), 1 - 0.2, 1 + 0.2) * self.td_error
                         )
