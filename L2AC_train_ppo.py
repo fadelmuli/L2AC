@@ -225,8 +225,8 @@ with tf.Session(config=config) as sess:
 
                 if not is_first:
                     td_error = critic.learn(pre_state, reward, state, end_of_video, lr_c)
-                    actor.learn(state, pre_ac, pre_ac_probs, td_error, lr_)
-                    L_actor.learn(state, pre_la_ac, pre_lac_probs, td_error, lr_)
+                    actor.learn(pre_state, pre_ac, pre_ac_probs, td_error, lr_)
+                    L_actor.learn(pre_state, pre_la_ac, pre_lac_probs, td_error, lr_)
                     
                     #actor.learn(state, action_vec, pre_ac_probs, td_error, lr_)
                     #L_actor.learn(state, laction_vec, pre_lac_probs, td_error, lr_)
