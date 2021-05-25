@@ -61,11 +61,12 @@ class Actor(object):
         self.lr = tf.placeholder(tf.float32, None, 'lr_ph')
         
         self.pi = self.CreateNetwork(inputs=self.s, n_actions=n_actions)
-        #self.real_out = tf.clip_by_value(self.pi, 1e-4, 1. - 1e-4)
+        self.real_out = tf.clip_by_value(self.pi, 1e-4, 1. - 1e-4)
         self.real_out = self.pi
         self.ppo2loss = tf.minimum(self.r(self.real_out, self.old_pi, self.acts) * self.td_error, 
                             tf.clip_by_value(self.r(self.real_out, self.old_pi, self.acts), 1 - 0.2, 1 + 0.2) * self.td_error
                         )
+        #self.ppo2loss = self.r(self.real_out, self.old_pi, self.acts) * self.td_error
         self.exp_v = - tf.reduce_sum(self.ppo2loss)
   
         with tf.variable_scope('train'):
@@ -92,6 +93,8 @@ class Critic(object):
         self.v_ = tf.placeholder(tf.float32, [1, 1], "v_next")
         self.r = tf.placeholder(tf.float32, None, 'r')
         self.lr = tf.placeholder(tf.float32, None, 'lr_ph')
+        self.end = tf.placeholder(tf.bool, None, 'end_video')
+        end_new = tf.cast(self.end, tf.float32)
 
         with tf.variable_scope('Critic'):
             split0 = tflearn.conv_1d(self.s[:, 0:1, :], 5, 1)
@@ -132,17 +135,21 @@ class Critic(object):
             )
 
         with tf.variable_scope('squared_TD_error'):
-            self.td_error = self.r + 0.9 * self.v_ - self.v
-            self.loss = tf.square(self.td_error)    # TD_error = (r+gamma*V_next) - V_eval
+            discount = 0.99 * 0.95
+
+            self.td_error = discount * (self.r + 0.99 * tf.math.multiply(self.v_, (1 - end_new)) - self.v)
+            self.loss = 0.5 * tf.reduce_mean(tf.square(self.td_error))    # TD_error = (r+gamma*V_next) - V_eval
+        
         with tf.variable_scope('train'):
             self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
 
-    def learn(self, s, r, s_, lr):
+    def learn(self, s, r, s_, end, lr):
         s, s_ = s[np.newaxis, :], s_[np.newaxis, :]
 
         v_ = self.sess.run(self.v, {self.s: s_})
         td_error, _ = self.sess.run([self.td_error, self.train_op],
-                                          {self.s: s, self.v_: v_, self.r: r, self.lr: lr})
+                                          {self.s: s, self.v_: v_, self.r: r, self.lr: lr,
+                                          self.end:end})
         return td_error
 
 
@@ -203,7 +210,7 @@ class LActor(object):
         self.lr = tf.placeholder(tf.float32, None, 'lr_ph')
         
         self.pi = self.CreateNetwork(inputs=self.s, n_actions=n_actions)
-        #self.real_out = tf.clip_by_value(self.pi, 1e-4, 1. - 1e-4)
+        self.real_out = tf.clip_by_value(self.pi, 1e-4, 1. - 1e-4)
         self.real_out = self.pi
         self.ppo2loss = tf.minimum(self.r(self.real_out, self.old_pi, self.acts) * self.td_error, 
                             tf.clip_by_value(self.r(self.real_out, self.old_pi, self.acts), 1 - 0.2, 1 + 0.2) * self.td_error
@@ -224,3 +231,4 @@ class LActor(object):
         s = s[np.newaxis, :]  # single state
         probs = self.sess.run(self.real_out, {self.s: s})
         return np.random.choice(np.arange(probs.shape[1]), p=probs.ravel()), probs
+
