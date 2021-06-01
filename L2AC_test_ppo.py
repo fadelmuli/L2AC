@@ -29,7 +29,19 @@ LR_C = 0.001
 
 # QOE setting
 reward_frame = 0
+bitrate_util_total = 0
+rebuff_p_total = 0
+latency_p_total = 0
+smooth_p_total = 0
+skip_p_total = 0
+
 reward_all = 0
+bitrate_util_all =0
+rebuff_p_all = 0
+latency_p_all = 0
+smooth_p_all = 0
+skip_p_all = 0
+
 SMOOTH_PENALTY = 0.02
 REBUF_PENALTY = 1.85
 SKIP_PENALTY = 0.5
