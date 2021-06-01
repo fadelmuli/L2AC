@@ -171,7 +171,7 @@ with tf.Session(config=config) as sess:
                     bitrate_util_total += bitrate_util
                     rebuff_p_total += rebuff_p
                     latency_p_total += latency_p
-                    skip_p_total = skip_p_total
+                    skip_p_total += skip_p
                     
                     
                 else:
@@ -275,6 +275,7 @@ with tf.Session(config=config) as sess:
                                    str(BIT_RATE[pre_bit_rate]) + '\t' +
                                    str(pre_latency_limit) + '\t' +
                                    str(target_buffer) + '\t' +
+                                   str(thr) + '\t' +
                                    str(frame_time_len) + '\t' +
                                    str(buffer_size) + '\t' +
                                    str(rebuf) + '\t' +
