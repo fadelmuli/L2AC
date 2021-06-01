@@ -275,7 +275,7 @@ with tf.Session(config=config) as sess:
                                    str(BIT_RATE[pre_bit_rate]) + '\t' +
                                    str(pre_latency_limit) + '\t' +
                                    str(target_buffer) + '\t' +
-                                   str(thr) + '\t' +
+                                   str(send_data_size/time_interval) + '\t' +
                                    str(frame_time_len) + '\t' +
                                    str(buffer_size) + '\t' +
                                    str(rebuf) + '\t' +
