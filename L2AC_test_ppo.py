@@ -65,6 +65,11 @@ LOG_FILE_PATH = './log/test'
 
 # defalut setting
 epoch_reward = 0
+epoch_bitrate_util = 0
+epoch_rebuff_p = 0
+epoch_latency_p = 0
+epoch_smooth_p = 0
+epoch_skip_p = 0
 last_bit_rate = 0
 bit_rate = 0
 target_buffer = 0
