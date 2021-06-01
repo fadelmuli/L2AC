@@ -121,6 +121,13 @@ with tf.Session(config=config) as sess:
             while True:
                 timestamp_start = tm.time()
                 reward_frame = 0
+                bitrate_util_total = 0
+                rebuff_p_total = 0
+                latency_p_total = 0
+                smooth_p_total = 0
+                skip_p_total = 0
+                
+                
 
                 time, time_interval, send_data_size, frame_time_len, \
                 rebuf, buffer_size, play_time_len, end_delay, \
@@ -137,16 +144,35 @@ with tf.Session(config=config) as sess:
                     LANTENCY_PENALTY = 0.01
 
                 if not cdn_flag:
-                    reward_frame = frame_time_len * float(BIT_RATE[
-                                                              bit_rate]) / 1000 - REBUF_PENALTY * rebuf - LANTENCY_PENALTY * end_delay - SKIP_PENALTY * skip_frame_time_len
+                    bitrate_util = frame_time_len * float(BIT_RATE[bit_rate]) / 1000
+                    rebuff_p = REBUF_PENALTY * rebuf
+                    latency_p = LANTENCY_PENALTY * end_delay
+                    skip_p = SKIP_PENALTY * skip_frame_time_len
+                    
+                    reward_frame = bitrate_util - rebuff_p - latency_p - skip_p
+                    
+                    bitrate_util_total += bitrate_util
+                    rebuff_p_total += rebuff_p
+                    latency_p_total += latency_p
+                    skip_p_total = skip_p_total
+                    
+                    
                 else:
+                    rebuff_p = REBUF_PENALTY * rebuf
                     reward_frame = -(REBUF_PENALTY * rebuf)
+                    
+                    rebuff_p_total += rebuff_p
+                    
 
                 chunk_reward += reward_frame
 
                 if decision_flag or end_of_video:
-                    reward_frame += -1 * SMOOTH_PENALTY * (abs(BIT_RATE[bit_rate] - BIT_RATE[last_bit_rate]) / 1000)
-                    chunk_reward += -1 * SMOOTH_PENALTY * (abs(BIT_RATE[bit_rate] - BIT_RATE[last_bit_rate]) / 1000)
+                    
+                    smooth_p = SMOOTH_PENALTY * (abs(BIT_RATE[bit_rate] - BIT_RATE[last_bit_rate]) / 1000)
+                    reward_frame += -1 * smooth_p
+                    chunk_reward += -1 * smooth_p
+                    
+                    smooth_p_total += smooth_p
                     # last_bit_rate
 
                     reward = chunk_reward
@@ -221,14 +247,23 @@ with tf.Session(config=config) as sess:
                     last_bit_rate = bit_rate
 
                 reward_all += reward_frame
+                bitrate_util_all += bitrate_util_total
+                rebuff_p_all += rebuff_p_total
+                latency_p_all += latency_p_total
+                smooth_p_all += smooth_p_total
+                skip_p_all += skip_p_total
 
-                log_file.write(str(time / 1000) + '\t' +
+                log_file.write(str(time) + '\t' +
+                                   str(time_interval) + '\t' +
                                    str(BIT_RATE[pre_bit_rate]) + '\t' +
                                    str(pre_latency_limit) + '\t' +
+                                   str(target_buffer) + '\t' +
+                                   str(frame_time_len) + '\t' +
                                    str(buffer_size) + '\t' +
                                    str(rebuf) + '\t' +
                                    str(send_data_size) + '\t' +
                                    str(end_delay) + '\t' +
+                                   str(skip_frame_time_len) + '\t' +
                                    str(reward_all) + '\n')
                 log_file.flush()
                 if end_of_video:
@@ -239,11 +274,31 @@ with tf.Session(config=config) as sess:
                            reward_all,
                            tm.time() - timestamp_start))
                     epoch_reward += reward_all
+                    epoch_bitrate_util += bitrate_util_all
+                    epoch_rebuff_p += rebuff_p_all
+                    epoch_latency_p += latency_p_all
+                    epoch_smooth_p += smooth_p_all
+                    epoch_skip_p += skip_p_all
                     reward_all = 0
+                    bitrate_util_all =0
+                    rebuff_p_all = 0
+                    latency_p_all = 0
+                    smooth_p_all = 0
+                    skip_p_all = 0
                     video_count += 1
                     if video_count >= len(all_file_names):
                         print("epoch total reward: %f" % (epoch_reward / video_count))
+                        print("bitrate util: %f" % (epoch_bitrate_util / video_count))
+                        print("rebuff penalty: %f" % (epoch_rebuff_p / video_count))
+                        print("latency penalty: %f" % (epoch_latency_p / video_count)) 
+                        print("smooth penalty: %f" % (epoch_smooth_p / video_count))
+                        print("skip penalty: %f" % (epoch_skip_p / video_count))
                         epoch_reward = 0
+                        epoch_bitrate_util = 0
+                        epoch_rebuff_p = 0
+                        epoch_latency_p = 0
+                        epoch_smooth_p = 0
+                        epoch_skip_p = 0
                         break
 
                 log_path = log_folder + '/' + all_file_names[net_env.trace_idx]
