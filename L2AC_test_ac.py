@@ -110,7 +110,6 @@ with tf.Session(config=config) as sess:
             video_count = 0
             is_first = True
 
-            VIDEO_TRACE = VIDEO_TRACE_list[video_id]
             video_trace_prefix = './dataset/video_trace/' + video + '/frame_trace_'
             network_trace_dir = './dataset/network_trace/' + network + '/'
             all_cooked_time, all_cooked_bw, all_file_names = load_trace.load_trace(network_trace_dir)
