@@ -137,8 +137,8 @@ class Critic(object):
         with tf.variable_scope('squared_TD_error'):
             discount = 0.99 * 0.95
 
-            self.td_error = discount * (self.r + 0.99 * tf.math.multiply(self.v_, (1 - end_new)) - self.v)
-            self.loss = 0.5 * tf.reduce_mean(tf.square(self.td_error))    # TD_error = (r+gamma*V_next) - V_eval
+            self.td_error = self.r + 0.9 * self.v_ - self.v
+            self.loss = tf.square(self.td_error)    # TD_error = (r+gamma*V_next) - V_eval
         
         with tf.variable_scope('train'):
             self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
